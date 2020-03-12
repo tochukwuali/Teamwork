@@ -4,6 +4,10 @@ import postroutes from './server/routes/PostRoutes'
 import userroutes from './server/routes/UserRoutes'
 import commentroutes from './server/routes/CommentRoutes'
 import authroutes from './server/routes/AuthRoutes'
+import {multerUploads, dataUri} from './server/middlewares/multer'
+import { resolve } from  'path'
+import { uploader, cloudinaryConfig } from './server/config/cloudinaryConfig'
+
 
 const app = express() 
 
@@ -23,6 +27,32 @@ app.get('*', (req, res) => {
         message: 'The app is set up and running correctly'
     })
 })
+
+app.use('*', cloudinaryConfig)
+
+app.post('/upload', multerUploads, (req, res) => {
+
+    if(req.file) {
+        const file = dataUri(req).content;
+        return uploader.upload(file)
+        
+        .then((result) => {
+
+            const image = result.url;
+            return res.status(200).json({
+            message: 'Your image has been uploded successfully to cloudinary',
+            result
+         })
+
+})
+        .catch((err) => res.status(400).json({
+            message: 'someting went wrong while processing your request',
+            data: { err }
+        })
+     )
+   }
+
+});
 
 app.listen(port, () => {
     console.log(`Server is running on PORT ${port} `)
